@@ -29,7 +29,8 @@ const corsOptions = {
 };
 
 app.use(helmet({
-    contentSecurityPolicy: false // Desabilitando temporariamente para desenvolvimento
+    contentSecurityPolicy: false, // Desabilitando temporariamente para desenvolvimento
+    crossOriginEmbedderPolicy: false,
 }));
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10kb' }));
