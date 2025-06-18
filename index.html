@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Tier List dinâmica de classes do AQW com gerenciamento de mapas e estatísticas">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <title>Lista de Classes do AQW por Tier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="min-h-screen flex flex-col items-center p-4 transition-colors duration-300 bg-gray-900 dark:bg-gray-900">
+    <div id="loader" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 backdrop-blur-sm">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+    </div>
+
+    <header role="banner" class="w-full max-w-4xl flex justify-between items-center mb-6 animate-fade-in">
+        <h1 class="text-4xl font-bold text-blue-300">Lista de Classes do AQW por Tier</h1>
+        <div class="flex items-center space-x-4">
+            <a href="enchants.html" class="text-blue-400 hover:text-blue-600 transition-colors duration-300 hover-scale">
+                <i class="fas fa-magic"></i> Ver Encantamentos
+            </a>
+            <button id="themeToggle" aria-label="Alternar tema" class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors duration-300 focus-ring">
+                <i class="fas fa-moon text-white"></i>
+            </button>
+        </div>
+    </header>
+
+    <section aria-label="Filtros de categoria" class="w-full max-w-4xl flex space-x-4 mb-6 justify-center flex-wrap animate-fade-in">
+        <button class="category-btn flex items-center px-4 py-2 bg-gray-700 rounded-lg mb-2 hover:bg-gray-600 transition-colors duration-300 focus-ring" data-category="farm">
+            <i class="fas fa-leaf mr-2"></i> Farming
+        </button>
+        <button class="category-btn flex items-center px-4 py-2 bg-gray-700 rounded-lg mb-2 hover:bg-gray-600 transition-colors duration-300 focus-ring" data-category="solo">
+            <i class="fas fa-user mr-2"></i> Solo
+        </button>
+        <button class="category-btn flex items-center px-4 py-2 bg-gray-700 rounded-lg mb-2 hover:bg-gray-600 transition-colors duration-300 focus-ring" data-category="worldboss">
+            <i class="fas fa-dragon mr-2"></i> Chefes Mundiais
+        </button>
+        <button class="category-btn flex items-center px-4 py-2 bg-gray-700 rounded-lg mb-2 hover:bg-gray-600 transition-colors duration-300 focus-ring" data-category="pvp">
+            <i class="fas fa-swords mr-2"></i> PvP
+        </button>
+    </section>
+
+    <section aria-label="Gerenciamento de dados" class="w-full max-w-4xl flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6 animate-fade-in">
+        <input type="text" id="searchInput" placeholder="Buscar Classe..."
+            class="flex-1 px-3 py-2 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 form-input">
+        <button id="exportBtn"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center transition-colors duration-300 focus-ring btn">
+            <i class="fas fa-download mr-2"></i> Exportar Tier List
+        </button>
+        <label for="importInput"
+            class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 cursor-pointer flex items-center justify-center transition-colors duration-300 focus-ring btn">
+            <i class="fas fa-upload mr-2"></i> Importar Tier List
+            <input type="file" id="importInput" accept=".json" class="hidden">
+        </label>
+    </section>
+
+    <form id="addClassForm"
+        class="mb-6 w-full max-w-4xl flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 p-4 bg-gray-800 rounded-lg shadow-lg animate-fade-in">
+        <input type="text" id="className" placeholder="Nome da Classe"
+            class="flex-1 px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 form-input"
+            required>
+        <select id="category"
+            class="px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 form-input"
+            required>
+            <option value="farm">Farming</option>
+            <option value="solo">Solo</option>
+            <option value="worldboss">Chefes Mundiais</option>
+            <option value="pvp">PvP</option>
+        </select>
+        <select id="tier"
+            class="px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 form-input"
+            required>
+            <option value="S">S</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+        </select>
+        <input type="number" id="mpmInput" placeholder="MPM (ex.: 100.5)" step="0.1" min="0"
+            class="w-full md:w-32 px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 form-input hidden">
+        <button type="submit"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center transition-colors duration-300 focus-ring btn">
+            <i class="fas fa-plus mr-2"></i> Adicionar Classe
+        </button>
+    </form>
+
+    <form id="addMapForm"
+        class="mb-6 w-full max-w-4xl flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 p-4 bg-gray-800 rounded-lg shadow-lg animate-fade-in">
+        <input type="text" id="mapName" placeholder="Nome do Mapa"
+            class="flex-1 px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 form-input"
+            required>
+        <input type="number" id="mapModifier" placeholder="Multiplicador (ex.: 1.0)" step="0.1" min="0"
+            class="w-full md:w-32 px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 form-input"
+            required>
+        <button type="submit"
+            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center justify-center transition-colors duration-300 focus-ring btn">
+            <i class="fas fa-map-marker-alt mr-2"></i> Adicionar Mapa
+        </button>
+    </form>
+
+    <div id="message" class="mb-4 text-center text-sm opacity-0 transition-opacity duration-300 notification"></div>
+
+    <div id="mapSection" class="w-full max-w-4xl mb-6 animate-fade-in">
+        <label for="mapSelect" class="block text-lg mb-2 text-blue-300">Selecione o Mapa:</label>
+        <select id="mapSelect"
+            class="px-3 py-2 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-1/2 form-input">
+            <option value="default">Padrão (Sem Ajuste, 1.0x)</option>
+        </select>
+    </div>
+
+    <div id="mapManagementSection" class="w-full max-w-4xl mb-6 p-4 bg-gray-800 rounded-lg shadow-lg animate-fade-in">
+        <h2 class="text-xl font-bold text-blue-300 mb-4">Gerenciar Mapas Existentes</h2>
+        <div id="existingMapsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        </div>
+    </div>
+
+    <div id="tierlist" class="w-full max-w-4xl animate-fade-in">
+    </div>
+
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 modal-backdrop">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full modal-content">
+            <h3 id="modalTitle" class="text-xl font-bold mb-4 text-white">Confirmação</h3>
+            <p id="modalMessage" class="text-gray-300 mb-4"></p>
+            <input type="text" id="modalInput"
+                class="w-full px-3 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 hidden form-input"
+                placeholder="Digite o novo valor">
+            <div class="flex justify-end space-x-4">
+                <button id="cancelModalBtn"
+                    class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-300 focus-ring btn">Cancelar</button>
+                <button id="confirmModalBtn"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-300 focus-ring btn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

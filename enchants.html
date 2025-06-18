@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encantamentos de Classes AQW</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a202c, #2d3748);
+            min-height: 100vh;
+            transition: background 0.3s ease;
+        }
+        .light-theme {
+            background: linear-gradient(135deg, #e2e8f0, #f7fafc);
+        }
+        #editEnchantModal, #createEnchantModal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: scale(0.95);
+            opacity: 0;
+        }
+        #editEnchantModal:not(.hidden), #createEnchantModal:not(.hidden) {
+            transform: scale(1);
+            opacity: 1;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #4b5563, #374151);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-200">
+    <div class="container mx-auto p-6 max-w-5xl">
+        <!-- Header -->
+        <h1 class="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+            Encantamentos de Classes AQW
+        </h1>
+
+        <!-- Loader -->
+        <div id="loader" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+        </div>
+
+        <!-- Message Display -->
+        <div id="message" class="mb-6 p-4 rounded-lg hidden transition-all duration-300"></div>
+
+        <!-- Class Selection -->
+        <div class="mb-8">
+            <label for="classSelect" class="block text-sm font-medium mb-2 text-gray-300">Selecione a Classe:</label>
+            <select id="classSelect" class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                <option value="">Escolha uma classe</option>
+            </select>
+        </div>
+
+        <!-- Enchantments Display -->
+        <div id="enchantments" class="grid gap-6 hidden">
+            <h2 class="text-2xl font-semibold text-gray-100 mb-4">Melhores Encantamentos</h2>
+            <div class="grid gap-6 sm:grid-cols-2">
+                <div class="bg-gray-800 p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-100">Arma (Weapon)</h3>
+                            <p id="weaponEnchant" class="text-gray-400">-</p>
+                        </div>
+                        <button id="editWeaponBtn" class="edit-enchant-btn btn-primary px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200" data-field="weapon">
+                            Editar
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-800 p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-100">Classe (Class)</h3>
+                            <p id="classEnchant" class="text-gray-400">-</p>
+                        </div>
+                        <button id="editClassBtn" class="edit-enchant-btn btn-primary px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200" data-field="class">
+                            Editar
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-800 p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-100">Capacete (Helm)</h3>
+                            <p id="helmEnchant" class="text-gray-400">-</p>
+                        </div>
+                        <button id="editHelmBtn" class="edit-enchant-btn btn-primary px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200" data-field="helm">
+                            Editar
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-800 p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-100">Capa (Cape)</h3>
+                            <p id="capeEnchant" class="text-gray-400">-</p>
+                        </div>
+                        <button id="editCapeBtn" class="edit-enchant-btn btn-primary px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200" data-field="cape">
+                            Editar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Enchantment Button (shown when no enchantments exist) -->
+        <div id="createEnchantBtnContainer" class="mt-6 hidden">
+            <button id="createEnchantBtn" class="btn-primary px-6 py-3 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 transition-all duration-200">
+                Criar Novo Encantamento
+            </button>
+        </div>
+
+        <!-- Edit Enchantment Modal -->
+        <div id="editEnchantModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-gray-800 p-6 rounded-xl shadow-2xl max-w-md w-full">
+                <h3 id="modalTitle" class="text-lg font-semibold text-gray-100 mb-4">Editar Encantamento</h3>
+                <p id="modalMessage" class="mb-4 text-gray-300"></p>
+                <input id="modalInput" type="text" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button id="cancelModalBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium text-gray-200 bg-gray-600 hover:bg-gray-700 transition-all duration-200">Cancelar</button>
+                    <button id="confirmModalBtn" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200">Confirmar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Enchantment Modal -->
+        <div id="createEnchantModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-gray-800 p-6 rounded-xl shadow-2xl max-w-md w-full">
+                <h3 id="createModalTitle" class="text-lg font-semibold text-gray-100 mb-4">Criar Novo Encantamento</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="createWeaponInput" class="block text-sm font-medium text-gray-300">Arma (Weapon)</label>
+                        <input id="createWeaponInput" type="text" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    </div>
+                    <div>
+                        <label for="createClassInput" class="block text-sm font-medium text-gray-300">Classe (Class)</label>
+                        <input id="createClassInput" type="text" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    </div>
+                    <div>
+                        <label for="createHelmInput" class="block text-sm font-medium text-gray-300">Capacete (Helm)</label>
+                        <input id="createHelmInput" type="text" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    </div>
+                    <div>
+                        <label for="createCapeInput" class="block text-sm font-medium text-gray-300">Capa (Cape)</label>
+                        <input id="createCapeInput" type="text" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button id="cancelCreateModalBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium text-gray-200 bg-gray-600 hover:bg-gray-700 transition-all duration-200">Cancelar</button>
+                    <button id="confirmCreateModalBtn" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 transition-all duration-200">Criar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <a href="index.html" class="mt-8 inline-flex items-center text-blue-400 hover:text-blue-300 transition-colors duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            Voltar para Tier List
+        </a>
+    </div>
+
+    <script src="enchants.js"></script>
+</body>
+</html>

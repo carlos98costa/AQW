@@ -1,0 +1,377 @@
+:root {
+    --color-primary: #63b3ed;
+    --color-danger: #f87171;
+    --color-success: #4ade80;
+    --color-warning: #facc15;
+    --bg-color: #1a202c;
+    --text-color: #e2e8f0;
+    --border-radius: 0.375rem;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.light-theme {
+    --bg-color: #f0f4f8;
+    --text-color: #1a202c;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', 'Arial', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.tier-header {
+    background-color: #2d3748;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-weight: 700;
+    color: #fbd38d;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    margin-top: 1rem;
+}
+
+.light-theme .tier-header {
+    background-color: #d1d5db;
+    color: #1a202c;
+}
+
+.tier-row {
+    background-color: #4a5568;
+    margin-bottom: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s ease;
+}
+
+.tier-row:hover {
+    transform: translateY(-2px);
+}
+
+.light-theme .tier-row {
+    background-color: #e5e7eb;
+    box-shadow: var(--shadow-sm);
+}
+
+.class-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #2d3748;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.class-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.group {
+    position: relative;
+    display: inline-flex;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
+    position: absolute;
+    z-index: 10;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%) scale(0.9);
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.group:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+}
+
+/* Styles for enchantments page */
+select, input {
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+    color: var(--text-color);
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    transition: border-color 0.2s ease;
+}
+
+select:focus, input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.light-theme select, .light-theme input {
+    background-color: #ffffff;
+    border-color: #d1d5db;
+    color: #1a202c;
+}
+
+/* Styles for edit enchantment buttons */
+.edit-enchant-btn {
+    margin-left: 0.5rem;
+}
+
+@media (max-width: 640px) {
+    .tier-header {
+        font-size: 0.875rem;
+        padding: 0.5rem;
+    }
+    
+    .class-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        padding: 0.5rem;
+    }
+    
+    .mpm-value {
+        margin-left: 0;
+        order: 2;
+    }
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Transições suaves */
+.transition-all {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Animações de entrada */
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-in {
+    animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Efeitos hover */
+.hover-scale {
+    transition: transform 0.2s ease-in-out;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+/* Melhorias de responsividade */
+@media (max-width: 768px) {
+    .mobile-stack {
+        flex-direction: column;
+    }
+    
+    .mobile-full-width {
+        width: 100%;
+    }
+    
+    .mobile-text-center {
+        text-align: center;
+    }
+}
+
+/* Melhorias de acessibilidade */
+.focus-ring {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+.focus-ring:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+/* Melhorias de tema escuro */
+.dark {
+    color-scheme: dark;
+}
+
+.dark .bg-gray-800 {
+    background-color: rgba(31, 41, 55, 0.8);
+}
+
+.dark .text-gray-300 {
+    color: rgba(209, 213, 219, 0.9);
+}
+
+/* Melhorias de carregamento */
+.loading-skeleton {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.1) 25%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.1) 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Melhorias de scroll */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+}
+
+/* Melhorias de botões */
+.btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(20, 20);
+        opacity: 0;
+    }
+}
+
+/* Melhorias de formulários */
+.form-input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+.form-input.error {
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
+
+/* Melhorias de cards */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Melhorias de modal */
+.modal-backdrop {
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    animation: modalFadeIn 0.3s ease-out forwards;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Melhorias de notificações */
+.notification {
+    animation: notificationSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes notificationSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Melhorias de tooltip */
+.tooltip {
+    position: relative;
+}
+
+.tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease-in-out;
+}
+
+.tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-0.5rem);
+}
