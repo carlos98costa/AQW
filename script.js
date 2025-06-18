@@ -244,27 +244,31 @@ function showMessage(text, type = 'info') {
 }
 
 /**
- * Carrega os dados do localStorage
+ * Carrega os dados do servidor
  */
-function loadData() {
-    const savedData = localStorage.getItem('tierData');
-    if (savedData) {
-        try {
-            const data = JSON.parse(savedData);
-            appState.tierData = convertToNestedMap(data);
-            
-            // Sincroniza com a lista de encantamentos ao carregar
-            syncClassesWithEnchants();
-        } catch (error) {
-            console.error('Erro ao carregar dados:', error);
-            appState.tierData = new Map();
+async function loadData() {
+    try {
+        showLoader();
+        const response = await fetch(`${CONFIG.API_BASE_URL}/classes`);
+        if (!response.ok) {
+            throw new Error('Erro ao carregar dados do servidor');
         }
-    } else {
+        
+        const { data } = await response.json();
+        appState.tierData = convertToNestedMap(data);
+        
+        // Sincroniza com a lista de encantamentos ao carregar
+        await syncClassesWithEnchants();
+        
+        // Atualiza a interface com os dados carregados
+        updateUI();
+    } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        showMessage('Erro ao carregar dados. Tente recarregar a página.', 'error');
         appState.tierData = new Map();
+    } finally {
+        hideLoader();
     }
-    
-    // Atualiza a interface com os dados carregados
-    updateUI();
 }
 
 /**
@@ -465,31 +469,44 @@ function renderTierSection(tier, classes) {
  * Manipula a remoção de uma classe
  * @param {string} className - Nome da classe
  */
-function handleRemoveClass(className) {
-    const category = appState.currentCategory;
-    const categoryData = appState.tierData.get(category);
-    if (!categoryData) return;
-    
-    // Procura a classe em todos os tiers
-    for (const [tier, classes] of categoryData.entries()) {
-        const index = classes.findIndex(cls => cls.name === className);
-        if (index !== -1) {
-            classes.splice(index, 1);
-            break;
+async function handleRemoveClass(className) {
+    try {
+        showLoader();
+        const response = await fetch(`${CONFIG.API_BASE_URL}/classes/${encodeURIComponent(className)}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao remover classe');
         }
+
+        // Atualiza os dados locais
+        const category = appState.currentCategory;
+        const categoryData = appState.tierData.get(category);
+        if (categoryData) {
+            for (const [tier, classes] of categoryData.entries()) {
+                const index = classes.findIndex(cls => cls.name === className);
+                if (index !== -1) {
+                    classes.splice(index, 1);
+                    break;
+                }
+            }
+        }
+
+        // Sincroniza com a lista de encantamentos
+        await syncClassesWithEnchants();
+        
+        // Atualiza a interface
+        showCategory(category);
+        
+        // Mostra notificação
+        showMessage('Classe removida com sucesso!', 'success');
+    } catch (error) {
+        console.error('Erro ao remover classe:', error);
+        showMessage('Erro ao remover classe. Tente novamente.', 'error');
+    } finally {
+        hideLoader();
     }
-    
-    // Salva os dados
-    saveData();
-    
-    // Sincroniza com a lista de encantamentos
-    syncClassesWithEnchants();
-    
-    // Atualiza a interface
-    showCategory(category);
-    
-    // Mostra notificação
-    showNotification('Classe removida com sucesso!', 'success');
 }
 
 /**
@@ -497,30 +514,35 @@ function handleRemoveClass(className) {
  * @param {string} className - Nome da classe
  * @param {string} currentTier - Tier atual
  */
-function handleEditClass(className, currentTier) {
-    const category = appState.currentCategory;
-    const categoryData = appState.tierData.get(category);
-    if (!categoryData) return;
-    
-    const classes = categoryData.get(currentTier);
-    if (!classes) return;
-    
-    const classData = classes.find(cls => cls.name === className);
-    if (!classData) return;
-    
-    // Preenche o formulário com os dados da classe
-    dom.classNameInput.value = classData.name;
-    dom.tierSelect.value = currentTier;
-    dom.mpmInput.value = classData.mpm || '';
-    
-    // Foca no campo de nome para facilitar a edição
-    dom.classNameInput.focus();
-    
-    // Rola até o formulário
-    dom.addClassForm.scrollIntoView({ behavior: 'smooth' });
-    
-    // Mostra notificação
-    showNotification('Edite os campos e clique em "Adicionar Classe" para salvar as alterações', 'info');
+async function handleEditClass(className, currentTier) {
+    try {
+        const category = appState.currentCategory;
+        const categoryData = appState.tierData.get(category);
+        if (!categoryData) return;
+        
+        const classes = categoryData.get(currentTier);
+        if (!classes) return;
+        
+        const classData = classes.find(cls => cls.name === className);
+        if (!classData) return;
+        
+        // Preenche o formulário com os dados da classe
+        dom.classNameInput.value = classData.name;
+        dom.tierSelect.value = currentTier;
+        dom.mpmInput.value = classData.mpm || '';
+        
+        // Foca no campo de nome para facilitar a edição
+        dom.classNameInput.focus();
+        
+        // Rola até o formulário
+        dom.addClassForm.scrollIntoView({ behavior: 'smooth' });
+        
+        // Mostra notificação
+        showMessage('Edite os campos e clique em "Adicionar Classe" para salvar as alterações', 'info');
+    } catch (error) {
+        console.error('Erro ao editar classe:', error);
+        showMessage('Erro ao editar classe. Tente novamente.', 'error');
+    }
 }
 
 /**
@@ -718,7 +740,7 @@ function addClass(name, tier, mpm = null) {
     saveData();
     
     // Sincroniza com a lista de encantamentos
-    syncClassesWithEnchants();
+    await syncClassesWithEnchants();
     
     // Atualiza a interface
     showCategory(category);
@@ -892,16 +914,28 @@ function showNotification(message, type = 'info') {
 /**
  * Sincroniza as classes da tierlist com a lista de encantamentos
  */
-function syncClassesWithEnchants() {
-    // Obtém todas as classes de todas as categorias e tiers
-    const allClasses = new Set();
-    
-    appState.tierData.forEach((categoryData) => {
-        categoryData.forEach((classes) => {
-            classes.forEach(cls => allClasses.add(cls.name));
+async function syncClassesWithEnchants() {
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/classes`);
+        if (!response.ok) {
+            throw new Error('Erro ao buscar classes');
+        }
+        
+        const { data } = await response.json();
+        
+        // Obtém todas as classes de todas as categorias e tiers
+        const allClasses = new Set();
+        
+        Object.entries(data).forEach(([category, tiers]) => {
+            Object.entries(tiers).forEach(([tier, classes]) => {
+                classes.forEach(cls => allClasses.add(cls.name));
+            });
         });
-    });
-    
-    // Salva a lista de classes no localStorage
-    localStorage.setItem('availableClasses', JSON.stringify(Array.from(allClasses)));
+        
+        // Salva a lista de classes no localStorage para cache
+        localStorage.setItem('availableClasses', JSON.stringify(Array.from(allClasses)));
+    } catch (error) {
+        console.error('Erro ao sincronizar classes:', error);
+        showMessage('Erro ao sincronizar classes. Tente recarregar a página.', 'error');
+    }
 }

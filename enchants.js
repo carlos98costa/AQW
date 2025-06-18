@@ -89,36 +89,46 @@ function showMessage(text, type = 'info') {
 }
 
 /**
- * Carrega classes do localStorage
+ * Carrega classes do servidor
  */
-function loadClasses() {
+async function loadClasses() {
     try {
-        // Tenta carregar as classes do localStorage
-        const savedClasses = localStorage.getItem('availableClasses');
-        if (savedClasses) {
-            const classes = JSON.parse(savedClasses);
-            
-            // Limpa o select
-            dom.classSelect.innerHTML = '<option value="">Escolha uma classe</option>';
-            
-            // Adiciona as classes ordenadas
-            classes.sort().forEach(className => {
-                const option = document.createElement('option');
-                option.value = className;
-                option.textContent = className;
-                dom.classSelect.appendChild(option);
-            });
-            
-            return;
+        showLoader();
+        const response = await fetch(`${CONFIG.API_BASE_URL}/classes`);
+        if (!response.ok) {
+            throw new Error('Erro ao carregar classes');
         }
         
-        // Se não houver classes salvas, mostra mensagem
-        dom.classSelect.innerHTML = '<option value="">Nenhuma classe disponível</option>';
-        showMessage('Nenhuma classe encontrada. Adicione classes na tierlist primeiro.', 'warning');
+        const { data } = await response.json();
+        
+        // Obtém todas as classes de todas as categorias e tiers
+        const allClasses = new Set();
+        
+        Object.entries(data).forEach(([category, tiers]) => {
+            Object.entries(tiers).forEach(([tier, classes]) => {
+                classes.forEach(cls => allClasses.add(cls.name));
+            });
+        });
+        
+        // Limpa o select
+        dom.classSelect.innerHTML = '<option value="">Escolha uma classe</option>';
+        
+        // Adiciona as classes ordenadas
+        Array.from(allClasses).sort().forEach(className => {
+            const option = document.createElement('option');
+            option.value = className;
+            option.textContent = className;
+            dom.classSelect.appendChild(option);
+        });
+        
+        // Salva no localStorage para cache
+        localStorage.setItem('availableClasses', JSON.stringify(Array.from(allClasses)));
     } catch (error) {
         console.error('Erro ao carregar classes:', error);
         dom.classSelect.innerHTML = '<option value="">Erro ao carregar classes</option>';
         showMessage('Erro ao carregar classes. Tente recarregar a página.', 'error');
+    } finally {
+        hideLoader();
     }
 }
 
