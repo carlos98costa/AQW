@@ -689,84 +689,132 @@ async function handleImport(e) {
  * @param {string} tier - Tier da classe
  * @param {number} mpm - MPM da classe (opcional)
  */
-function addClass(name, tier, mpm = null) {
+async function addClass(name, tier, mpm = null) {
     if (!name || !tier) return;
     
     const category = appState.currentCategory;
     if (!category) return;
     
-    // Garante que a categoria existe no tierData
-    if (!appState.tierData.has(category)) {
-        appState.tierData.set(category, new Map());
-    }
-    
-    // Garante que o tier existe na categoria
-    const categoryData = appState.tierData.get(category);
-    if (!categoryData.has(tier)) {
-        categoryData.set(tier, []);
-    }
-    
-    // Verifica se a classe já existe em algum tier
-    let existingClass = null;
-    let existingTier = null;
-    
-    for (const [t, classes] of categoryData.entries()) {
-        const found = classes.find(cls => cls.name === name);
-        if (found) {
-            existingClass = found;
-            existingTier = t;
-            break;
+    try {
+        showLoader();
+        
+        // Envia a classe para o servidor
+        const response = await fetch(`${CONFIG.API_BASE_URL}/classes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                category: category,
+                tier: tier,
+                mpm: mpm ? parseFloat(mpm) : 0
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao salvar classe');
         }
-    }
-    
-    // Se a classe existe, remove ela do tier antigo
-    if (existingClass) {
-        const oldClasses = categoryData.get(existingTier);
-        const index = oldClasses.findIndex(cls => cls.name === name);
-        if (index !== -1) {
-            oldClasses.splice(index, 1);
+
+        // Atualiza os dados locais
+        if (!appState.tierData.has(category)) {
+            appState.tierData.set(category, new Map());
         }
+        
+        const categoryData = appState.tierData.get(category);
+        if (!categoryData.has(tier)) {
+            categoryData.set(tier, []);
+        }
+        
+        // Verifica se a classe já existe em algum tier
+        let existingClass = null;
+        let existingTier = null;
+        
+        for (const [t, classes] of categoryData.entries()) {
+            const found = classes.find(cls => cls.name === name);
+            if (found) {
+                existingClass = found;
+                existingTier = t;
+                break;
+            }
+        }
+        
+        // Se a classe existe, remove ela do tier antigo
+        if (existingClass) {
+            const oldClasses = categoryData.get(existingTier);
+            const index = oldClasses.findIndex(cls => cls.name === name);
+            if (index !== -1) {
+                oldClasses.splice(index, 1);
+            }
+        }
+        
+        // Adiciona a nova classe
+        const newClass = {
+            name: name,
+            mpm: mpm ? parseFloat(mpm) : null
+        };
+        
+        categoryData.get(tier).push(newClass);
+        
+        // Sincroniza com a lista de encantamentos
+        await syncClassesWithEnchants();
+        
+        // Atualiza a interface
+        showCategory(category);
+        
+        // Mostra notificação de sucesso
+        showMessage(
+            existingClass 
+                ? 'Classe atualizada com sucesso!' 
+                : 'Classe adicionada com sucesso!', 
+            'success'
+        );
+    } catch (error) {
+        console.error('Erro ao adicionar classe:', error);
+        showMessage('Erro ao adicionar classe. Tente novamente.', 'error');
+    } finally {
+        hideLoader();
     }
-    
-    // Adiciona a nova classe
-    const newClass = {
-        name: name,
-        mpm: mpm ? parseFloat(mpm) : null
-    };
-    
-    categoryData.get(tier).push(newClass);
-    
-    // Salva os dados
-    saveData();
-    
-    // Sincroniza com a lista de encantamentos
-    await syncClassesWithEnchants();
-    
-    // Atualiza a interface
-    showCategory(category);
-    
-    // Mostra notificação de sucesso
-    showNotification(
-        existingClass 
-            ? 'Classe atualizada com sucesso!' 
-            : 'Classe adicionada com sucesso!', 
-        'success'
-    );
 }
 
 /**
- * Salva os dados no localStorage
+ * Salva os dados no banco de dados
  */
-function saveData() {
-    const data = {};
-    appState.tierData.forEach((categoryMap, category) => {
-        data[category] = {};
-        categoryMap.forEach((classes, tier) => {
-            data[category][tier] = classes;
+async function saveData() {
+    try {
+        // Converte os dados para o formato esperado pela API
+        const data = {};
+        appState.tierData.forEach((categoryMap, category) => {
+            data[category] = {};
+            categoryMap.forEach((classes, tier) => {
+                data[category][tier] = classes;
+            });
         });
-    });
-    
-    localStorage.setItem('tierData', JSON.stringify(data));
+        
+        // Envia os dados para o servidor
+        const response = await fetch(`${CONFIG.API_BASE_URL}/classes/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.entries(data).flatMap(([category, tiers]) => 
+                Object.entries(tiers).flatMap(([tier, classes]) =>
+                    classes.map(cls => ({
+                        name: cls.name,
+                        category,
+                        tier,
+                        mpm: cls.mpm || 0
+                    }))
+                )
+            ))
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao salvar dados');
+        }
+
+        // Salva no localStorage para cache
+        localStorage.setItem('tierData', JSON.stringify(data));
+    } catch (error) {
+        console.error('Erro ao salvar dados:', error);
+        showMessage('Erro ao salvar dados. Tente novamente.', 'error');
+    }
 }
 
 /**
@@ -802,7 +850,7 @@ function setupEventListeners() {
     
     // Event listener para o formulário de adicionar classe
     if (dom.addClassForm) {
-        dom.addClassForm.addEventListener('submit', (e) => {
+        dom.addClassForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             if (!dom.classNameInput || !dom.tierSelect) {
@@ -815,11 +863,11 @@ function setupEventListeners() {
             const mpm = dom.mpmInput ? dom.mpmInput.value.trim() : null;
             
             if (!name || !tier) {
-                showNotification('Por favor, preencha todos os campos obrigatórios.', 'error');
+                showMessage('Por favor, preencha todos os campos obrigatórios.', 'error');
                 return;
             }
             
-            addClass(name, tier, mpm);
+            await addClass(name, tier, mpm);
             
             // Limpa o formulário
             dom.addClassForm.reset();
@@ -838,7 +886,7 @@ function setupEventListeners() {
     
     // Event listeners para edição e remoção de classes
     if (dom.tierlistDiv) {
-        dom.tierlistDiv.addEventListener('click', (e) => {
+        dom.tierlistDiv.addEventListener('click', async (e) => {
             const editBtn = e.target.closest('.edit-class-btn');
             const removeBtn = e.target.closest('.remove-class-btn');
             
@@ -846,12 +894,12 @@ function setupEventListeners() {
                 const className = editBtn.dataset.class;
                 const tier = editBtn.dataset.tier;
                 if (className && tier) {
-                    handleEditClass(className, tier);
+                    await handleEditClass(className, tier);
                 }
             } else if (removeBtn) {
                 const className = removeBtn.dataset.class;
                 if (className) {
-                    handleRemoveClass(className);
+                    await handleRemoveClass(className);
                 }
             }
         });
